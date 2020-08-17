@@ -1,0 +1,24 @@
+{
+  "name": "users",
+  "version": "1.0.0",
+  "description": "Users service Working on this - Sree",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DBMSS-team/users.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DBMSS-team/users/issues"
+  },
+  "homepage": "https://github.com/DBMSS-team/users#readme",
+  "dependencies": {
+    "mongoose": "^5.10.0",
+    "node-uuid": "^1.4.8"
+  }
+}
