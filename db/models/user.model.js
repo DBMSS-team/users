@@ -59,6 +59,7 @@ let userSchema = new Schema(
 		wallet_id: { type: String },
 		user_addresses: [addressSchema],
 		cards: [cardSchema],
+		cart_id: { type: String },
 	},
 	{
 		timestamps: true,
