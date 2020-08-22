@@ -30,6 +30,7 @@ const userRouter = require('./routes/user');
 
 app.use('/users', userRouter);
 
+//Error handler
 app.use((err, req, res, next) => {
 	if (err) {
 		res.status(err.status ? err.status : 500);

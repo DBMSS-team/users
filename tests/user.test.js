@@ -1,6 +1,5 @@
-const mongoose = require('mmongoose');
+const mongoose = require('mongoose');
 const UserModel = require('../db/models/user.model');
-const { describe } = require('yargs');
 const userData = {
 	username: 'Sahil',
 	password: 'Sahil',
@@ -23,7 +22,7 @@ describe('User model test', () => {
 		);
 	});
 
-	it('create and save user', async () => {
+	test('create and save user', async () => {
 		const validUser = new UserModel(userData);
 		const savedUser = await validUser.save();
 		// Object Id should be defined when successfully saved to MongoDB.
@@ -33,7 +32,7 @@ describe('User model test', () => {
 		expect(savedUser.user_category).toBe(userData.user_category);
 	});
 
-	it('check if the existing user is authenticated', async () => {
+	test('check if the existing user is authenticated', async () => {
 		const validUser = new UserModel({
 			username: userData.username,
 			password: userData.password,
@@ -44,7 +43,7 @@ describe('User model test', () => {
 		});
 	});
 
-	it('check if the incorrect user is not authenticated', async () => {
+	test('check if the incorrect user is not authenticated', async () => {
 		const validUser = new UserModel({
 			username: 'WrongUserAbcd',
 			password: 'abcdefgh',

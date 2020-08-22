@@ -62,17 +62,17 @@ let userSchema = new Schema(
 );
 
 // Check for future lock
-userSchema.method('isLocked').get(() => {
+userSchema.virtual('isLocked').get(function () {
 	return this.lockUntil && this.lockUntil > Date.now();
 });
 
 // Middleware before saving user
-userSchema.pre('save', async (next) => {
+userSchema.pre('save', async function (next) {
 	try {
 		var user = this;
 
 		// Only hash the password if it is new or modified
-		if (!user.password.isModified()) return next();
+		if (!user.isModified('password')) return next();
 
 		// Generate a salt
 		const salt = await bcrypt.genSalt(SALT_FACTOR);
@@ -85,7 +85,7 @@ userSchema.pre('save', async (next) => {
 });
 
 // Compare password
-userSchema.methods.comparePassword = (password) => {
+userSchema.methods.comparePassword = function (password) {
 	return new Promise((resolve, reject) => {
 		bcrypt
 			.compare(password, this.password)
@@ -95,7 +95,7 @@ userSchema.methods.comparePassword = (password) => {
 };
 
 // Check the login attempts
-userSchema.methods.incLoginAttempts = (cb) => {
+userSchema.methods.incLoginAttempts = function (cb) {
 	// If we have a previous lock that has expired restart at 1
 	if (this.lockUntil && this.lockUntil < Date.now()) {
 		return this.update(
@@ -130,7 +130,7 @@ let reasons = (userSchema.statics.failedLogon = {
  * @param {password} Password of the user entered
  * @param {cb} Callback (err, user, error_reason)
  */
-userSchema.statics.getAuthenticated = async (username, password, cb) => {
+userSchema.statics.getAuthenticated = async function (username, password, cb) {
 	try {
 		let user = await this.findOne({ username: username });
 
@@ -148,7 +148,7 @@ userSchema.statics.getAuthenticated = async (username, password, cb) => {
 
 		if (isMatch) {
 			if (!user.loginAttempts && !user.lockUntil) {
-				cb(null, user);
+				return cb(null, user);
 			}
 
 			// Reset attempts and lock info
