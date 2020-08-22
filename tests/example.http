@@ -1,0 +1,27 @@
+GET http://localhost:5008/users/ HTTP/1.1
+
+###
+
+GET http://localhost:5008/users HTTP/1.1
+
+###
+
+POST http://localhost:5008/users/ HTTP/1.1
+content-type: application/json
+
+{
+   "username": "Rajeev",
+   "password": "Rajeev",
+   "email": "rjstyles@gmail.com",
+   "user_category": "Premium"
+}
+
+###
+
+GET http://localhost:5008/users/login/ HTTP/1.1
+content-type: application/json
+
+{
+   "username": "Rajeev",
+   "password": "Sahil"
+}

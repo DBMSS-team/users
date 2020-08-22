@@ -4,7 +4,10 @@
 	"description": "Users service Working on this - Sree",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"dev": "nodemon srv/app.js",
+		"start": "node srv/app.js",
+		"test": "jest --coverage",
+		"watch": "jest --watchAll"
 	},
 	"repository": {
 		"type": "git",
@@ -19,7 +22,27 @@
 	"homepage": "https://github.com/DBMSS-team/users#readme",
 	"dependencies": {
 		"@hapi/joi": "^17.1.1",
-		"mongoose": "^5.10.0",
-		"node-uuid": "^1.4.8"
+		"bcrypt": "^5.0.0",
+		"cors": "^2.8.5",
+		"dotenv": "^8.2.0",
+		"express": "^4.17.1",
+		"mongoose": "^5.10.0"
+	},
+	"jest": {
+		"verbose": true,
+		"testEnvironment": "node",
+		"coverageThreshold": {
+			"global": {
+				"branches": 50,
+				"functions": 55,
+				"lines": 55,
+				"statements": 55
+			}
+		}
+	},
+	"devDependencies": {
+		"@shelf/jest-mongodb": "^1.2.2",
+		"jest": "^26.4.2",
+		"nodemon": "^2.0.4"
 	}
 }

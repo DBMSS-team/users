@@ -8,6 +8,16 @@ router.route('/').get((req, res) => {
 		.catch((err) => res.status(400).json('Error: ' + err));
 });
 
+// Login authenticate
+router.route('/login').get((req, res) => {
+	const username = req.body.username;
+	const password = req.body.password;
+	User.getAuthenticated(username, password, (err, user, reason) => {
+		if (err) res.status(404).json(`${reason} : ${err}`);
+		res.status(200).json(user);
+	});
+});
+
 // Get specific user
 router.route('/:id').get((req, res) => {
 	const id = req.params.id;
