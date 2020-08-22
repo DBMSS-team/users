@@ -62,7 +62,7 @@ let userSchema = new Schema(
 );
 
 // Check for future lock
-userSchema.methods('isLocked').get(() => {
+userSchema.method('isLocked').get(() => {
 	return this.lockUntil && this.lockUntil > Date.now();
 });
 
@@ -121,7 +121,7 @@ userSchema.methods.incLoginAttempts = (cb) => {
 let reasons = (userSchema.statics.failedLogon = {
 	NOT_FOUND: 0,
 	PASSWORD_INCORRECT: 1,
-	MAX_ATTEMPTS,
+	MAX_ATTEMPTS: 2,
 });
 
 /**

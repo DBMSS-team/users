@@ -51,4 +51,13 @@ router.route('/:id').delete(async (req, res) => {
 	}
 });
 
+router.route('/login').get((req, res) => {
+	const username = req.body.username;
+	const password = req.body.password;
+	User.getAuthenticated(username, password, (err, user, reason) => {
+		if (err) res.status(404).json(`${reason} : ${err}`);
+		res.status(200).json(`User: ${user}`);
+	});
+});
+
 module.exports = router;
