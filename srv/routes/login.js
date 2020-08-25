@@ -1,7 +1,19 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 let User = require('../../db/models/user.model').User;
+require('dotenv').config();
+
+const SALT_FACTOR = 10;
 const jwtExpirySeconds = 15 * 60;
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
+
+async function genKey(id, password) {
+	const rawKey = id + password;
+	const salt = await bcrypt.genSalt(SALT_FACTOR);
+	const hash = await bcrypt.hash(rawKey, salt);
+	return hash;
+}
 
 function genAccessToken(user) {
 	const userId = user.id;
@@ -48,22 +60,26 @@ router.post('/refreshToken', async (request, response) => {
 		}
 
 		const newAccessToken = genAccessToken(userInDb);
-		response.status(200).json({ newAccessToken });
+		return newAccessToken;
 	} catch (error) {
 		response.status(401).send(error.message);
 	}
 });
 
 // Login authenticate
-router.route('/login').post(async (req, res) => {
+router.route('/login').post(async (req, res, next) => {
 	const username = req.body.username;
 	const password = req.body.password;
 	User.getAuthenticated(username, password, (err, user, reason) => {
 		if (err) res.status(404).json(`${reason} : ${err}`);
-		const accessToken = genAccessToken(user);
-		const refreshToken = genRefreshToken(user);
-		response.cookie('token', token, { maxAge: jwtExpirySeconds * 1000 });
-		response.status(200).json({ accessToken, refreshToken });
+		try {
+			const accessToken = genAccessToken(user);
+			const refreshToken = genRefreshToken(user);
+			res.cookie('token', accessToken, { maxAge: jwtExpirySeconds * 1000 });
+			res.status(200).json({ accessToken, refreshToken });
+		} catch (err) {
+			next(err);
+		}
 	});
 });
 

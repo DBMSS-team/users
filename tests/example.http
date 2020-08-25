@@ -23,7 +23,7 @@ content-type: application/json
    "role": "ADMIN"
 }
 
-### Usesr Login
+### User Login
 
 POST http://localhost:5008/auth/login HTTP/1.1
 content-type: application/json

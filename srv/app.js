@@ -8,7 +8,6 @@ const loginRouter = require('./routes/login');
 
 require('dotenv').config();
 
-const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const app = express();
 const port = process.env.PORT || 5008;
 
