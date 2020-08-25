@@ -1,14 +1,21 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const authorization = require('./middlewares/authorization');
+const cookieParser = require('cookie-parser');
+const userRouter = require('./routes/user');
+const loginRouter = require('./routes/login');
 
 require('dotenv').config();
 
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const app = express();
 const port = process.env.PORT || 5008;
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
+app.use(authorization.authorizationMiddleware);
 
 const uri = process.env.ATLAS_URI;
 mongoose
@@ -26,15 +33,14 @@ connection.once('open', () => {
 	console.log(`MongoDB database connection established successfully`);
 });
 
-const userRouter = require('./routes/user');
-
 app.use('/users', userRouter);
+app.use('/auth', loginRouter);
 
 //Error handler
 app.use((err, req, res, next) => {
 	if (err) {
 		res.status(err.status ? err.status : 500);
-		res.json(err.message);
+		res.json(err.message ? err.message : 'Error');
 	}
 });
 
