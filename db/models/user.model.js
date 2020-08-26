@@ -51,7 +51,7 @@ let userSchema = new Schema(
 			default: 'Normal',
 			text: 'Normal and Premium',
 		}, // 2 types: Normal and Premium
-		role: { type: String, required: true },
+		role: [{ type: String }],
 		wallet_id: { type: String },
 		user_addresses: [addressSchema],
 		cards: [cardSchema],

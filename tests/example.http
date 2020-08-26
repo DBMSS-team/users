@@ -8,10 +8,9 @@ POST http://localhost:5008/users/ HTTP/1.1
 content-type: application/json
 
 {
-   "username": "Deepak",
-   "password": "Deepak",
-   "email": "deepakbharadwaj@gmail.com",
-   "user_category": "Premium"
+   "username": "Test",
+   "password": "Test",
+   "email": "test@gmail.com"
 }
 
 ### Update new user
