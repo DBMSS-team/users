@@ -1,10 +1,11 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const messages = require('../commons/constants/messages');
+const messages = require(__commons + '/constants/messages');
 const redisTables = require(__commons + '/constants/redisTables');
 const redisFactory = new (require(__commons + '/utils/redisFactory'))();
 const responseUtils = new (require(__commons + '/utils/responseUtils'))();
+const httpCodes = require(__commons + '/utils/httpCodes');
 let User = require('../../db/models/user.model').User;
 require('dotenv').config();
 
@@ -54,23 +55,32 @@ router.post('/refreshToken', async (request, response) => {
 	const refreshToken = request.body.refreshToken;
 
 	try {
-		const tokenPayload = jwt.verify(refreshToken, JWT_SECRET_KEY);
-		if (tokenPayload.type !== 'refresh')
-			throw new Error(messages.REFRESH_TOKEN_NOT_FOUND);
+		jwt.verify(refreshToken, JWT_SECRET_KEY, async (err, tokenPayload) => {
+			if (err) {
+				responseUtils.setError(httpCodes.FORBIDDEN, messages.INVALID_TOKEN);
+			}
+			if (tokenPayload.type !== 'refresh') {
+				responseUtils.setError(
+					httpCodes.FORBIDDEN,
+					messages.REFRESH_TOKEN_NOT_FOUND
+				);
+			}
+			const userId = tokenPayload.userId;
+			const userInDb = await findUserById(userId);
+			const password = userInDb.password;
 
-		const userId = tokenPayload.userId;
-		const userInDb = await findUserById(userId);
-		const password = userInDb.password;
+			const keyToCompare = genKey(userId, password);
+			if (keyToCompare !== tokenPayload.key) {
+				throw new Error(messages.PASSWORD_CHANGED);
+			}
 
-		const keyToCompare = genKey(userId, password);
-		if (keyToCompare !== tokenPayload.key) {
-			throw new Error('password changed');
-		}
-
-		const newAccessToken = genAccessToken(userInDb);
-		return newAccessToken;
+			const newAccessToken = genAccessToken(userInDb);
+			return newAccessToken;
+		});
 	} catch (error) {
-		response.status(401).send(error.message);
+		responseUtils
+			.setError(httpCodes.INTERNAL_SERVER_ERROR, error.message)
+			.send(response);
 	}
 });
 
@@ -79,23 +89,24 @@ router.route('/signup').post(async (req, res) => {
 	try {
 		const userExists = await User.find({ username: req.body.username });
 		if (userExists.length) {
-			res.status(400).json('User already exists with this username');
+			responseUtils.setError(httpCodes.INVALID_PARAMS, messages.USER_EXISTS);
 			return;
 		}
 		const newUser = new User(req.body);
 		newUser
 			.save()
 			.then((user) => {
-				responseUtils.setSuccess(true, 200, 'User added', user);
-				responseUtils.send(res);
+				responseUtils
+					.setSuccess(true, httpCodes.CREATED, messages.USER_CREATED, user)
+					.send(res);
 			})
 			.catch((err) => {
-				responseUtils.setError(500, err.message);
-				responseUtils.send(res);
+				responseUtils.setError(httpCodes.DB_ERROR, err.message).send(res);
 			});
 	} catch (err) {
-		responseUtils.setError(400, err.message);
-		responseUtils.send(res);
+		responseUtils
+			.setError(httpCodes.INTERNAL_SERVER_ERROR, err.message)
+			.send(res);
 	}
 });
 
@@ -105,11 +116,11 @@ router.route('/login').post(async (req, res, next) => {
 	const password = req.body.password;
 	User.getAuthenticated(username, password, (err, user, reason) => {
 		if (err) {
-			throw err;
+			next(err);
+			return;
 		}
 		if (reason) {
-			responseUtils.setError(404, reason);
-			responseUtils.send(res);
+			responseUtils.setError(httpCodes.UNAUTHORIZED, reason).send(res);
 			return;
 		}
 		try {
@@ -123,13 +134,9 @@ router.route('/login').post(async (req, res, next) => {
 			res.cookie('token', accessToken, { maxAge: jwtExpirySeconds * 1000 });
 			res.cookie('refreshToken', refreshToken);
 			redisFactory.hmSet(redisTables.TOKEN, user.id, JSON.stringify(tokenData));
-			responseUtils.setSuccess(
-				true,
-				200,
-				messages.USER_LOGIN_SUCCESS,
-				tokenData
-			);
-			res.status(200).json({ accessToken, refreshToken });
+			responseUtils
+				.setSuccess(true, httpCodes.OK, messages.USER_LOGIN_SUCCESS, tokenData)
+				.send(res);
 		} catch (err) {
 			next(err);
 		}
