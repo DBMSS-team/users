@@ -45,8 +45,13 @@ let userSchema = new Schema(
 		password: { type: String, required: true },
 		loginAttempts: { type: Number, default: 0 },
 		lockUntil: { type: Number },
-		phone_number: { type: Number },
-		email: { type: String, required: true },
+		phone_number: {
+			type: Number,
+			required: true,
+			unique: true,
+			dropDups: true,
+		},
+		email: { type: String, required: true, unique: true, dropDups: true },
 		user_category: {
 			type: String,
 			default: 'Normal',
