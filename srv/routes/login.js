@@ -1,8 +1,10 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const redisTable = require('../constants/constants').redisTables;
-const redisFactory = new (require('../libs/redisFactory'))();
+const messages = require('../commons/constants/messages');
+const redisTables = require(__commons + '/constants/redisTables');
+const redisFactory = new (require(__commons + '/utils/redisFactory'))();
+const responseUtils = new (require(__commons + '/utils/responseUtils'))();
 let User = require('../../db/models/user.model').User;
 require('dotenv').config();
 
@@ -53,7 +55,8 @@ router.post('/refreshToken', async (request, response) => {
 
 	try {
 		const tokenPayload = jwt.verify(refreshToken, JWT_SECRET_KEY);
-		if (tokenPayload.type !== 'refresh') throw new Error('wrong token type');
+		if (tokenPayload.type !== 'refresh')
+			throw new Error(messages.REFRESH_TOKEN_NOT_FOUND);
 
 		const userId = tokenPayload.userId;
 		const userInDb = await findUserById(userId);
@@ -82,10 +85,17 @@ router.route('/signup').post(async (req, res) => {
 		const newUser = new User(req.body);
 		newUser
 			.save()
-			.then(() => res.status(200).json('User added.'))
-			.catch((err) => res.status(400).json('Error: ' + err));
+			.then((user) => {
+				responseUtils.setSuccess(true, 200, 'User added', user);
+				responseUtils.send(res);
+			})
+			.catch((err) => {
+				responseUtils.setError(500, err.message);
+				responseUtils.send(res);
+			});
 	} catch (err) {
-		res.status(400).json('Error: ' + err);
+		responseUtils.setError(400, err.message);
+		responseUtils.send(res);
 	}
 });
 
@@ -94,7 +104,14 @@ router.route('/login').post(async (req, res, next) => {
 	const username = req.body.username;
 	const password = req.body.password;
 	User.getAuthenticated(username, password, (err, user, reason) => {
-		if (err) res.status(404).json(`${reason} : ${err}`);
+		if (err) {
+			throw err;
+		}
+		if (reason) {
+			responseUtils.setError(404, reason);
+			responseUtils.send(res);
+			return;
+		}
 		try {
 			const accessToken = genAccessToken(user);
 			const refreshToken = genRefreshToken(user);
@@ -105,7 +122,13 @@ router.route('/login').post(async (req, res, next) => {
 			};
 			res.cookie('token', accessToken, { maxAge: jwtExpirySeconds * 1000 });
 			res.cookie('refreshToken', refreshToken);
-			redisFactory.hmSet(redisTable.TOKEN, user.id, JSON.stringify(tokenData));
+			redisFactory.hmSet(redisTables.TOKEN, user.id, JSON.stringify(tokenData));
+			responseUtils.setSuccess(
+				true,
+				200,
+				messages.USER_LOGIN_SUCCESS,
+				tokenData
+			);
 			res.status(200).json({ accessToken, refreshToken });
 		} catch (err) {
 			next(err);
@@ -115,9 +138,12 @@ router.route('/login').post(async (req, res, next) => {
 
 router.route('/logout').post((req, res) => {
 	const user_data = req.user_data;
-	let tokenCurrentUserData = redisFactory.hmGet(redisTable.TOKEN, user_data.id);
+	let tokenCurrentUserData = redisFactory.hmGet(
+		redisTables.TOKEN,
+		user_data.id
+	);
 	tokenCurrentUserData.valid = 'false';
-	redisFactory.hmSet(redisTable, user_data.id, tokenCurrentUserData);
+	redisFactory.hmSet(redisTables, user_data.id, tokenCurrentUserData);
 });
 
 module.exports = router;

@@ -1,5 +1,6 @@
+global.__commons = __dirname + '/../srv/commons';
 const mongoose = require('mongoose');
-const UserModel = require('../db/models/user.model');
+const UserModel = require('../db/models/user.model').User;
 const userData = {
 	username: 'Sahil',
 	password: 'Sahil',
@@ -52,4 +53,6 @@ describe('User model test', () => {
 			expect(err).toBeDefined();
 		});
 	});
+
+	afterAll();
 });

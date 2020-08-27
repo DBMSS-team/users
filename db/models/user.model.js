@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const messages = require(__commons + '/constants/messages');
 
 SALT_FACTOR = 10;
 MAX_LOGIN_ATTEMPTS = 5;
@@ -118,13 +119,6 @@ userSchema.methods.incLoginAttempts = function (cb) {
 	return this.update(updates, cb);
 };
 
-// Static enum for internal reference
-let reasons = (userSchema.statics.failedLogon = {
-	NOT_FOUND: 0,
-	PASSWORD_INCORRECT: 1,
-	MAX_ATTEMPTS: 2,
-});
-
 /**
  * Check if user is authenticated
  * @param {username} Name of the user entered
@@ -136,16 +130,18 @@ userSchema.statics.getAuthenticated = async function (username, password, cb) {
 		let user = await this.findOne({ username: username });
 
 		if (!user) {
-			return cb(null, null, reasons.NOT_FOUND);
+			return cb(null, null, messages.NO_USER_FOUND);
 		}
 
 		// Check if the user is currently locked
 		if (user.isLocked) {
-			return cb(null, null, reasons.MAX_ATTEMPTS);
+			return cb(null, null, messages.USER_LOCKED);
 		}
 
 		// Test for matching password
-		let isMatch = await user.comparePassword(password).catch((err) => cb(err));
+		let isMatch = await user
+			.comparePassword(password)
+			.catch((err) => cb(err, null, messages.INCORRECT_PASSWORD));
 
 		if (isMatch) {
 			if (!user.loginAttempts && !user.lockUntil) {
@@ -159,15 +155,15 @@ userSchema.statics.getAuthenticated = async function (username, password, cb) {
 			};
 
 			return user.update(updates, (err) => {
-				if (err) return cb(err);
+				if (err) return cb(err, null);
 				return cb(null, user);
 			});
 		}
 
 		// password is incorrect, so increment the login attempts
 		user.incLoginAttempts((err) => {
-			if (err) cb(err);
-			return cb(null, null, reasons.PASSWORD_INCORRECT);
+			if (err) cb(err, null);
+			return cb(null, null, messages.MAX_ATTEMPTS_EXCEEDED);
 		});
 	} catch (err) {
 		return cb(err);

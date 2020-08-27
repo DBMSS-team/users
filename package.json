@@ -1,11 +1,11 @@
 {
 	"name": "users",
 	"version": "1.0.0",
-	"description": "Users service Working on this - Sree",
+	"description": "Users service Working on this - Sahil",
 	"main": "index.js",
 	"scripts": {
-		"dev": "nodemon srv/app.js",
-		"start": "node srv/app.js",
+		"dev": "cross-env NODE_ENV=development nodemon srv/app.js",
+		"start": "cross-env NODE_ENV=production node srv/app.js",
 		"test": "jest --coverage",
 		"watch": "jest --watchAll"
 	},
@@ -25,6 +25,7 @@
 		"bcrypt": "^5.0.0",
 		"cookie-parser": "^1.4.5",
 		"cors": "^2.8.5",
+		"cross-env": "^7.0.2",
 		"dotenv": "^8.2.0",
 		"express": "^4.17.1",
 		"jsonwebtoken": "^8.5.1",
