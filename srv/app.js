@@ -1,7 +1,10 @@
+// Global variables declaration for commons submodule
+global.__commons = __dirname + '/commons';
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const authorization = require('./middlewares/authorization');
+const authorization = require(__commons + '/middlewares/authorization');
 const cookieParser = require('cookie-parser');
 const userRouter = require('./routes/user');
 const loginRouter = require('./routes/login');
@@ -38,7 +41,7 @@ app.use('/auth', loginRouter);
 app.use((err, req, res, next) => {
 	if (err) {
 		res.status(err.status ? err.status : 500);
-		res.json(err.message ? err.message : 'Error');
+		res.json(err.message ? err.message : 'Unexpected Error');
 	}
 });
 
