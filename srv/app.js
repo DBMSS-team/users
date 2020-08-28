@@ -1,10 +1,10 @@
 // Global variables declaration for commons submodule
-global.__commons = __dirname + '/commons';
+global.__commons = __dirname + '/commons/index';
 
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const authorization = require(__commons + '/middlewares/authorization');
+const { authorization } = require(__commons);
 const cookieParser = require('cookie-parser');
 const userRouter = require('./routes/user');
 const loginRouter = require('./routes/login');
