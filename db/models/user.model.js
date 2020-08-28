@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const messages = require(__commons + '/constants/messages');
+const { messages } = require(__commons);
 
 SALT_FACTOR = 10;
 MAX_LOGIN_ATTEMPTS = 5;

@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const { messages, redisTables, redisFactory, responseUtils, httpCodes } = require(__commons);
+const { messages, redisTables, RedisFactory, httpCodes } = require(__commons);
+const ResponseUtils = new (require(__commons).ResponseUtils)();
 let User = require('../../db/models/user.model').User;
 require('dotenv').config();
 
@@ -53,10 +54,10 @@ router.post('/refreshToken', async (request, response) => {
 	try {
 		jwt.verify(refreshToken, JWT_SECRET_KEY, async (err, tokenPayload) => {
 			if (err) {
-				responseUtils.setError(httpCodes.FORBIDDEN, messages.INVALID_TOKEN);
+				ResponseUtils.setError(httpCodes.FORBIDDEN, messages.INVALID_TOKEN);
 			}
 			if (tokenPayload.type !== 'refresh') {
-				responseUtils.setError(
+				ResponseUtils.setError(
 					httpCodes.FORBIDDEN,
 					messages.REFRESH_TOKEN_NOT_FOUND
 				);
@@ -74,7 +75,7 @@ router.post('/refreshToken', async (request, response) => {
 			return newAccessToken;
 		});
 	} catch (error) {
-		responseUtils
+		ResponseUtils
 			.setError(httpCodes.INTERNAL_SERVER_ERROR, error.message)
 			.send(response);
 	}
@@ -85,22 +86,22 @@ router.route('/signup').post(async (req, res) => {
 	try {
 		const userExists = await User.find({ username: req.body.username });
 		if (userExists.length) {
-			responseUtils.setError(httpCodes.INVALID_PARAMS, messages.USER_EXISTS);
+			ResponseUtils.setError(httpCodes.INVALID_PARAMS, messages.USER_EXISTS);
 			return;
 		}
 		const newUser = new User(req.body);
 		newUser
 			.save()
 			.then((user) => {
-				responseUtils
-					.setSuccess(true, httpCodes.CREATED, messages.USER_CREATED, user)
+				ResponseUtils
+					.setSuccess(httpCodes.CREATED, messages.USER_CREATED, user)
 					.send(res);
 			})
 			.catch((err) => {
-				responseUtils.setError(httpCodes.DB_ERROR, err.message).send(res);
+				ResponseUtils.setError(httpCodes.DB_ERROR, err.message).send(res);
 			});
 	} catch (err) {
-		responseUtils
+		ResponseUtils
 			.setError(httpCodes.INTERNAL_SERVER_ERROR, err.message)
 			.send(res);
 	}
@@ -116,7 +117,7 @@ router.route('/login').post(async (req, res, next) => {
 			return;
 		}
 		if (reason) {
-			responseUtils.setError(httpCodes.UNAUTHORIZED, reason).send(res);
+			ResponseUtils.setError(httpCodes.UNAUTHORIZED, reason).send(res);
 			return;
 		}
 		try {
@@ -129,9 +130,9 @@ router.route('/login').post(async (req, res, next) => {
 			};
 			res.cookie('token', accessToken, { maxAge: jwtExpirySeconds * 1000 });
 			res.cookie('refreshToken', refreshToken);
-			redisFactory.hmSet(redisTables.TOKEN, user.id, JSON.stringify(tokenData));
-			responseUtils
-				.setSuccess(true, httpCodes.OK, messages.USER_LOGIN_SUCCESS, tokenData)
+			RedisFactory.hmSet(redisTables.TOKEN, user.id, JSON.stringify(tokenData));
+			ResponseUtils
+				.setSuccess(httpCodes.OK, messages.USER_LOGIN_SUCCESS, tokenData)
 				.send(res);
 		} catch (err) {
 			next(err);
@@ -139,14 +140,14 @@ router.route('/login').post(async (req, res, next) => {
 	});
 });
 
-router.route('/logout').post((req, res) => {
-	const user_data = req.user_data;
-	let tokenCurrentUserData = redisFactory.hmGet(
+router.route('/logout').post(async (req, res) => {
+	const user_data = req.body;
+	let tokenCurrentUserData = await RedisFactory.hmGet(
 		redisTables.TOKEN,
 		user_data.id
 	);
 	tokenCurrentUserData.valid = 'false';
-	redisFactory.hmSet(redisTables, user_data.id, tokenCurrentUserData);
+	RedisFactory.hmSet(redisTables.TOKEN, user_data.id, JSON.stringify(tokenCurrentUserData));
 });
 
 module.exports = router;
