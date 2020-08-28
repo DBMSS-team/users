@@ -1,6 +1,5 @@
 const router = require('express').Router();
-const authorization = require(__commons + '/middlewares/authorization')
-	.authorizationMiddleware;
+const authorization = require(__commons).authorization.authorizationMiddleware;
 let User = require('../../db/models/user.model').User;
 
 router.use(authorization);

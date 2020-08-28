@@ -1,11 +1,7 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const messages = require(__commons + '/constants/messages');
-const redisTables = require(__commons + '/constants/redisTables');
-const redisFactory = new (require(__commons + '/utils/redisFactory'))();
-const responseUtils = new (require(__commons + '/utils/responseUtils'))();
-const httpCodes = require(__commons + '/utils/httpCodes');
+const { messages, redisTables, redisFactory, responseUtils, httpCodes } = require(__commons);
 let User = require('../../db/models/user.model').User;
 require('dotenv').config();
 
