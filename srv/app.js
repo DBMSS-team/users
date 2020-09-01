@@ -8,6 +8,10 @@ const { authorization } = require(__commons);
 const cookieParser = require('cookie-parser');
 const userRouter = require('./routes/user');
 const loginRouter = require('./routes/login');
+const { logger } = require(__commons);
+const appLogger = logger.appLogger;
+const errorLogger = logger.errorLogger;
+
 require('dotenv').config();
 
 const app = express();
@@ -17,21 +21,22 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(authorization.authorizationMiddleware);
+logger.use(app);
 
-const uri = process.env.ATLAS_URI;
+const uri = 'abc'//process.env.ATLAS_URI;
 mongoose
 	.connect(uri, {
 		useNewUrlParser: true,
 		useUnifiedTopology: true,
-		createIndexes: true,
+		useCreateIndex: true,
 	})
 	.catch(function () {
-		console.log('DB connection error');
+		errorLogger.error('DB connection error');
 	});
 
 const connection = mongoose.connection;
 connection.once('open', () => {
-	console.log(`MongoDB database connection established successfully`);
+	appLogger.info(`MongoDB database connection established successfully`);
 });
 
 app.use('/users', userRouter);
@@ -46,7 +51,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(port, () => {
-	console.log(`Server is running on port: ${port}`);
+	appLogger.info(`Server is running on port: ${port}`);
 });
 
 module.exports = { app };
