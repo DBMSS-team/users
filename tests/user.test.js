@@ -1,19 +1,21 @@
-global.__commons = __dirname + '/../srv/commons';
-const mongoose = require('mongoose');
-const UserModel = require('../db/models/user.model').User;
+global.__commons = __dirname + "/../srv/commons";
+const mongoose = require("mongoose");
+const UserModel = require("../db/models/user.model").User;
 const userData = {
-	username: 'Sahil',
-	password: 'Sahil',
-	email: 'kumarsahil129@gmail.com',
-	user_category: 'Premium',
+	username: "Sahil",
+	password: "Sahil",
+	email: "kumarsahil129@gmail.com",
+	userCategory: "Premium"
 };
 
-describe('User model test', () => {
+describe("User model test", () => {
 	// Connect to mongoDB
-	beforeAll(async () => {
+	UserModel.beforeAll(async () => {
 		await mongoose.connect(
 			global.__MONGO_URI__,
-			{ useNewUrlParser: true, useCreateIndex: true },
+			{
+				useNewUrlParser: true, useCreateIndex: true
+			},
 			(err) => {
 				if (err) {
 					console.error(err);
@@ -23,7 +25,7 @@ describe('User model test', () => {
 		);
 	});
 
-	test('create and save user', async () => {
+	test("create and save user", async () => {
 		const validUser = new UserModel(userData);
 		const savedUser = await validUser.save();
 		// Object Id should be defined when successfully saved to MongoDB.
@@ -33,10 +35,10 @@ describe('User model test', () => {
 		expect(savedUser.user_category).toBe(userData.user_category);
 	});
 
-	test('check if the existing user is authenticated', async () => {
+	test("check if the existing user is authenticated", async () => {
 		const validUser = new UserModel({
 			username: userData.username,
-			password: userData.password,
+			password: userData.password
 		});
 		validUser.getAuthenticated((err, user, reason) => {
 			expect(err).toBeUndefined();
@@ -44,15 +46,15 @@ describe('User model test', () => {
 		});
 	});
 
-	test('check if the incorrect user is not authenticated', async () => {
+	test("check if the incorrect user is not authenticated", async () => {
 		const validUser = new UserModel({
-			username: 'WrongUserAbcd',
-			password: 'abcdefgh',
+			username: "WrongUserAbcd",
+			password: "abcdefgh"
 		});
 		validUser.getAuthenticated((err, user, reason) => {
 			expect(err).toBeDefined();
 		});
 	});
 
-	afterAll();
+	UserModel.afterAll();
 });

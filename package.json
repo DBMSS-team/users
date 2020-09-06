@@ -7,7 +7,14 @@
 		"dev": "cross-env NODE_ENV=development nodemon srv/app.js",
 		"start": "cross-env NODE_ENV=production node srv/app.js",
 		"test": "jest --coverage",
-		"watch": "jest --watchAll"
+		"watch": "jest --watchAll",
+		"lint": "eslint -f stylish --ignore-path .gitignore .",
+		"pretest": "./node_modules/.bin/eslint --ignore-path .gitignore . --fix"
+	},
+	"husky": {
+		"hooks": {
+			"pre-commit": "npm run pretest"
+		}
 	},
 	"repository": {
 		"type": "git",
@@ -47,6 +54,9 @@
 	},
 	"devDependencies": {
 		"@shelf/jest-mongodb": "^1.2.2",
+		"babel-eslint": "^10.1.0",
+		"eslint": "^7.8.1",
+		"husky": "^4.2.5",
 		"jest": "^26.4.2",
 		"nodemon": "^2.0.4"
 	}

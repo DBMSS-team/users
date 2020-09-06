@@ -1,85 +1,118 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+// eslint-disable-next-line no-undef
 const { messages } = require(__commons);
 
-SALT_FACTOR = 10;
-MAX_LOGIN_ATTEMPTS = 5;
-LOCK_TIME = 2 * 60 * 60 * 1000;
+const SALT_FACTOR = 10;
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_TIME = 2 * 60 * 60 * 1000;
 
 const Schema = mongoose.Schema;
 
 // Todo: add comments where required as defined in addressSchema
 // Todo: Optimize the types and filters on them
 // Todo: Perform validations wherever possible
-let addressSchema = new Schema({
-	line_1: { type: String, required: [true, 'Insert line 1'] },
-	line_2: { type: String },
-	city: { type: String, required: [true, 'Insert city'] },
-	state: { type: String, required: [true, 'Insert state'] },
-	country: { type: String, required: [true, 'Insert country'] },
-	pin_code: { type: Number, required: [true, 'Insert pin code'] },
+const addressSchema = new Schema({
+	line1: {
+		type: String, required: [true, "Insert line 1"]
+	},
+	line2: {
+		type: String
+	},
+	city: {
+		type: String, required: [true, "Insert city"]
+	},
+	state: {
+		type: String, required: [true, "Insert state"]
+	},
+	country: {
+		type: String, required: [true, "Insert country"]
+	},
+	pinCode: {
+		type: Number, required: [true, "Insert pin code"]
+	}
 });
 
-let cardSchema = new Schema({
-	card_no: { type: String, required: true }, // Todo: Store hash and show only last 4 digit
-	card_holder_name: { type: String, required: true },
-	expiry_date: {
+const cardSchema = new Schema({
+	cardNo: {
+		type: String, required: true
+	}, // Todo: Store hash and show only last 4 digit
+	cardHolderName: {
+		type: String, required: true
+	},
+	expiryDate: {
 		type: Date,
 		required: true,
 		validate: {
 			validator: function (v) {
 				return /\d{2}\/\d{4}/.test(v);
-			},
-		},
-	},
+			}
+		}
+	}
 });
 
-let userSchema = new Schema(
+const userSchema = new Schema(
 	{
 		username: {
 			type: String,
 			unique: true,
 			required: true,
-			index: { unique: true },
+			index: {
+				unique: true
+			}
 		},
-		password: { type: String, required: true },
-		loginAttempts: { type: Number, default: 0 },
-		lockUntil: { type: Number },
-		phone_number: {
+		password: {
+			type: String, required: true
+		},
+		loginAttempts: {
+			type: Number, "default": 0
+		},
+		lockUntil: {
+			type: Number
+		},
+		phoneNumber: {
 			type: Number,
 			required: true,
 			unique: true,
-			dropDups: true,
+			dropDups: true
 		},
-		email: { type: String, required: true, unique: true, dropDups: true },
-		user_category: {
+		email: {
+			type: String, required: true, unique: true, dropDups: true
+		},
+		userCategory: {
 			type: String,
-			default: 'Normal',
-			text: 'Normal and Premium',
+			"default": "Normal",
+			text: "Normal and Premium"
 		}, // 2 types: Normal and Premium
-		role: [{ type: String }],
-		wallet_id: { type: String },
-		user_addresses: [addressSchema],
+		role: [{
+			type: String
+		}],
+		walletId: {
+			type: String
+		},
+		userAddresses: [addressSchema],
 		cards: [cardSchema],
-		cart_id: { type: String },
+		cartId: {
+			type: String
+		}
 	},
 	{
-		timestamps: true,
+		timestamps: true
 	}
 );
 
 // Check for future lock
-userSchema.virtual('isLocked').get(function () {
+userSchema.virtual("isLocked").get(function () {
 	return this.lockUntil && this.lockUntil > Date.now();
 });
 
 // Middleware before saving user
-userSchema.pre('save', async function (next) {
+userSchema.pre("save", async function (next) {
 	try {
-		var user = this;
+		const user = this;
 
 		// Only hash the password if it is new or modified
-		if (!user.isModified('password')) return next();
+		if (!user.isModified("password")) { return next(); }
 
 		// Generate a salt
 		const salt = await bcrypt.genSalt(SALT_FACTOR);
@@ -107,18 +140,26 @@ userSchema.methods.incLoginAttempts = function (cb) {
 	if (this.lockUntil && this.lockUntil < Date.now()) {
 		return this.update(
 			{
-				$set: { loginAttempts: 1 },
-				$set: { lockUntil: 1 },
+				$set: {
+					loginAttempts: 1,
+					lockUntil: 1
+				}
 			},
 			cb
 		);
 	}
 
 	// Otherwise increment the loginAttempts
-	let updates = { $inc: { loginAttempts: 1 } };
+	const updates = {
+		$inc: {
+			loginAttempts: 1
+		}
+	};
 	// Lock the account if reached max limit if not locked already
 	if (this.loginAttempts + 1 >= MAX_LOGIN_ATTEMPTS && !this.isLocked) {
-		updates.$set = { lockUntil: Date.now() + LOCK_TIME };
+		updates.$set = {
+			lockUntil: Date.now() + LOCK_TIME
+		};
 	}
 
 	return this.update(updates, cb);
@@ -132,7 +173,9 @@ userSchema.methods.incLoginAttempts = function (cb) {
  */
 userSchema.statics.getAuthenticated = async function (username, password, cb) {
 	try {
-		let user = await this.findOne({ username: username });
+		const user = await this.findOne({
+			username: username
+		});
 
 		if (!user) {
 			return cb(null, null, messages.NO_USER_FOUND);
@@ -144,7 +187,7 @@ userSchema.statics.getAuthenticated = async function (username, password, cb) {
 		}
 
 		// Test for matching password
-		let isMatch = await user
+		const isMatch = await user
 			.comparePassword(password)
 			.catch((err) => cb(err, null, messages.INCORRECT_PASSWORD));
 
@@ -154,20 +197,22 @@ userSchema.statics.getAuthenticated = async function (username, password, cb) {
 			}
 
 			// Reset attempts and lock info
-			let updates = {
-				$set: { loginAttempts: 0 },
-				$set: { lockUntil: 0 },
+			const updates = {
+				$set: {
+					loginAttempts: 0,
+					lockUntil: 0
+				}
 			};
 
 			return user.update(updates, (err) => {
-				if (err) return cb(err, null);
+				if (err) { return cb(err, null); }
 				return cb(null, user);
 			});
 		}
 
 		// password is incorrect, so increment the login attempts
 		user.incLoginAttempts((err) => {
-			if (err) cb(err, null);
+			if (err) { cb(err, null); }
 			return cb(null, null, messages.MAX_ATTEMPTS_EXCEEDED);
 		});
 	} catch (err) {
@@ -175,6 +220,8 @@ userSchema.statics.getAuthenticated = async function (username, password, cb) {
 	}
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
-module.exports = { User, addressSchema };
+module.exports = {
+	User, addressSchema
+};
