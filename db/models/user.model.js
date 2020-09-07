@@ -109,15 +109,15 @@ userSchema.virtual("isLocked").get(function () {
 // Middleware before saving user
 userSchema.pre("save", async function (next) {
 	try {
-		const user = this;
+		const that = this;
 
 		// Only hash the password if it is new or modified
-		if (!user.isModified("password")) { return next(); }
+		if (!that.isModified("password")) { return next(); }
 
 		// Generate a salt
 		const salt = await bcrypt.genSalt(SALT_FACTOR);
-		const hash = await bcrypt.hash(user.password, salt);
-		user.password = hash;
+		const hash = await bcrypt.hash(that.password, salt);
+		that.password = hash;
 		next();
 	} catch (err) {
 		next(err);

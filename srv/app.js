@@ -4,11 +4,10 @@ global.__commons = __dirname + "/commons/index";
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const { authorization } = require(__commons);
+const { authorization, a2aClient, logger } = require(__commons);
 const cookieParser = require("cookie-parser");
 const userRouter = require("./routes/user");
 const loginRouter = require("./routes/login");
-const { logger } = require(__commons);
 const appLogger = logger.appLogger;
 const errorLogger = logger.errorLogger;
 
@@ -33,6 +32,7 @@ connection.once("open", () => {
 	appLogger.info("MongoDB database connection established successfully");
 });
 
+a2aClient.use(app);
 logger.use(app);
 app.use(cors());
 app.use(express.json());
