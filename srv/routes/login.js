@@ -38,7 +38,8 @@ function genRefreshToken(user) {
 	const role = user.role;
 	const type = "refresh";
 
-	// Also keeping password because if someone else gets refresh token, then it can be changed by changing the password
+	// Also keeping password because if someone else gets refresh token,
+	// then it can be changed by changing the password
 	const password = user.password;
 	const key = genKey(userId, password);
 
@@ -148,7 +149,7 @@ router.route("/login").post(async (req, res, next) => {
 	});
 });
 
-router.route("/logout").post(async (req, res) => {
+router.route("/logout").post(async (req) => {
 	const userData = req.body;
 	const tokenCurrentUserData = await RedisFactory.hmGet(
 		redisTables.TOKEN,
