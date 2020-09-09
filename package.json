@@ -1,7 +1,7 @@
 {
 	"name": "users",
 	"version": "1.0.0",
-	"description": "Users service Working on this - Sahil",
+	"description": "Users service",
 	"main": "index.js",
 	"scripts": {
 		"dev": "cross-env NODE_ENV=development nodemon srv/app.js",
@@ -40,7 +40,7 @@
 		"hystrix-too-busy": "^0.2.0",
 		"jsonwebtoken": "^8.5.1",
 		"log4js": "^6.3.0",
-		"mongoose": "^5.10.0",
+		"mongoose": "^5.10.3",
 		"redis": "^3.0.2"
 	},
 	"jest": {

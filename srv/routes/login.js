@@ -58,12 +58,12 @@ router.post("/refreshToken", async (request, response) => {
 	try {
 		jwt.verify(refreshToken, JWT_SECRET_KEY, async (err, tokenPayload) => {
 			if (err) {
-				ResponseUtils.setError(httpCodes.FORBIDDEN, messages.INVALID_TOKEN);
+				ResponseUtils.setError(httpCodes.FORBIDDEN, [messages.INVALID_TOKEN, err.message]);
 			}
 			if (tokenPayload.type !== "refresh") {
 				ResponseUtils.setError(
 					httpCodes.FORBIDDEN,
-					messages.REFRESH_TOKEN_NOT_FOUND
+					[messages.REFRESH_TOKEN_NOT_FOUND, err.message]
 				);
 			}
 			const userId = tokenPayload.userId;

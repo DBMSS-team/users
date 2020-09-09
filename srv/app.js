@@ -1,5 +1,5 @@
 // Global variables declaration for commons submodule
-global.__commons = __dirname + "/commons/index";
+global.__commons = __dirname + "/commons";
 
 const express = require("express");
 const cors = require("cors");

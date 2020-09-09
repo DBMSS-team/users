@@ -1,22 +1,28 @@
+const messages = require("../commons/constants/messages");
+const { response } = require("express");
+
 const router = require("express").Router();
-const authorization = require(__commons).authorization.authorizationMiddleware;
+const { authorization, ResponseUtils, httpCodes } = require(__commons);
+const auth = authorization.authorizationMiddleware;
+const responseUtils = new ResponseUtils();
 const User = require("../../db/models/user.model").User;
 
-router.use(authorization);
+router.use(auth);
 
 // Get all users
 router.route("/").get((req, res) => {
 	User.find()
-		.then((user) => res.json(user))
-		.catch((err) => res.status(400).json("Error: " + err));
+		.then((user) => responseUtils.setSuccess(httpCodes.OK, messages.USERS_FETCHED, user)
+			.send(res))
+		.catch((err) => responseUtils.setError(httpCodes.NOT_FOUND, err.message).send(res));
 });
 
 // Get specific user
 router.get("/:id", (req, res) => {
 	const id = req.params.id;
 	User.findById(id, (err, user) => {
-		if (err) { res.status(400).json("Error: " + err); }
-		res.json(user);
+		if (err) responseUtils.setError(httpCodes.NOT_FOUND, err.message).send(res);
+		responseUtils.setSuccess(httpCodes.OK, messages.USERS_FETCHED, user).send(res);
 	});
 });
 
@@ -27,16 +33,17 @@ router.post("/", async (req, res) => {
 			username: req.body.username
 		});
 		if (userExists.length) {
-			res.status(400).json("User already exists with this username");
+			res.setError(httpCodes.NOT_FOUND, messages.USER_EXISTS).send(res);
 			return;
 		}
 		const newUser = new User(req.body);
 		newUser
 			.save()
-			.then(() => res.status(200).json("User added."))
-			.catch((err) => res.status(400).json("Error: " + err));
+			.then(() => responseUtils.setSuccess(httpCodes.OK, messages.USER_CREATED, newUser)
+				.send(res))
+			.catch((err) => responseUtils.setError(httpCodes.DB_ERROR, err.message).send(res));
 	} catch (err) {
-		res.status(400).json("Error: " + err);
+		responseUtils.setError(httpCodes.INTERNAL_SERVER_ERROR, err.message).send(res);
 	}
 });
 
@@ -48,9 +55,9 @@ router.put("/:id", async (req, res) => {
 			"new": true,
 			useFindAndModify: false
 		});
-		res.json(updatedUser);
+		responseUtils.setSuccess(httpCodes.OK, USER_UPDATED, updatedUser).send(res);
 	} catch (err) {
-		res.status(400).json("Error: " + err);
+		responseUtils.setError(httpCodes.DB_ERROR, err.message).send(res);
 	}
 });
 
@@ -59,12 +66,12 @@ router.delete("/:id", async (req, res, next) => {
 	const id = req.params.id;
 	try {
 		const deletedUser = await User.findByIdAndDelete(id);
-		res.json(deletedUser);
+		responseUtils.setSuccess(httpCodes.OK, messages.USER_DELETED, deletedUser).send(res);
 	} catch (err) {
 		if (err.status) {
 			next(err);
 		}
-		res.status(400).json("Error: " + err);
+		responseUtils.setError(httpCodes.DB_ERROR, err.message).send(res);
 	}
 });
 
