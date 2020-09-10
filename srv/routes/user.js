@@ -1,5 +1,4 @@
 const messages = require("../commons/constants/messages");
-const { response } = require("express");
 
 const router = require("express").Router();
 const { authorization, ResponseUtils, httpCodes } = require(__commons);
